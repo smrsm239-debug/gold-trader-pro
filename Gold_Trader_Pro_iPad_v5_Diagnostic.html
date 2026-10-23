@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Gold Trader Pro — iPad v5 Diagnostic</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121c2e;--line:#26364f;--muted:#9aabc4;--text:#edf3fc;--gold:#f3c969;--green:#43d6a0;--red:#ff7584;--blue:#80b9ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1220,#101b2d);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom)}
+main{max-width:920px;margin:auto;padding:18px 0 34px}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.brand{font-weight:800;font-size:23px;letter-spacing:.2px}.brand span{color:var(--gold)}.sub{color:var(--muted);font-size:13px;margin-top:5px}.pill{border:1px solid var(--line);border-radius:99px;padding:8px 11px;color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}.card{background:rgba(18,28,46,.94);border:1px solid var(--line);border-radius:17px;padding:15px;min-width:0}.wide{grid-column:1/-1}.label{color:var(--muted);font-size:12px}.price{font-size:clamp(30px,7vw,45px);font-weight:800;letter-spacing:-1px;margin:7px 0}.gold{color:var(--gold)}.status{font-size:13px;line-height:1.6}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-left:6px}.ok{background:var(--green)}.warn{background:var(--gold)}.bad{background:var(--red)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.metric{background:#0d1727;border:1px solid #20304a;border-radius:12px;padding:10px}.metric strong{display:block;font-size:17px;margin-top:5px}.metric span{font-size:11px;color:var(--muted)}button{font:inherit;border:1px solid #344764;background:#1b2a42;color:var(--text);padding:11px 14px;border-radius:12px;cursor:pointer}button.primary{background:#f3c969;color:#172033;border-color:#f3c969;font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chartwrap{position:relative;height:260px;margin-top:10px}canvas{width:100%;height:100%;display:block}.small{font-size:12px;color:var(--muted);line-height:1.7}.signal{font-size:19px;font-weight:800;margin:8px 0}.tag{display:inline-block;padding:5px 8px;border-radius:8px;background:#1a2b43;color:var(--blue);font-size:11px}.list{margin:8px 0 0;padding:0 18px 0 0;color:#d5dfef;font-size:13px;line-height:1.9}.footer{color:var(--muted);font-size:11px;line-height:1.7;margin-top:16px}.error{color:var(--red)}a{color:var(--blue)}@media(max-width:460px){.grid{gap:9px}.card{padding:12px}.metrics{grid-template-columns:1fr}.metric{display:flex;align-items:center;justify-content:space-between}.metric strong{margin:0}.chartwrap{height:220px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><div class="brand">GOLD <span>TRADER PRO</span></div><div class="sub">نسخة تشخيص اتصال XAUS للآيباد · قراءة فقط · v5</div></div>
+    <div class="pill">M15 · بدون تنفيذ صفقات</div>
+  </div>
+  <div class="grid">
+    <section class="card">
+      <div class="label">سعر الذهب الفوري XAU/USD</div>
+      <div id="price" class="price gold">—</div>
+      <div id="sourceStatus" class="status"><span class="dot"></span> جارٍ الاتصال بمصدر البيانات…</div>
+      <div class="small" id="updated">لم تصل قراءة بعد</div>
+    </section>
+    <section class="card">
+      <div class="label">حالة الاتصال</div>
+      <div id="connection" class="signal">جارٍ الفحص</div>
+      <div class="small">المصدر: XAUS Gold Data API</div>
+      <div class="actions"><button class="primary" id="refresh">تحديث الآن</button><button id="pause">إيقاف التحديث</button></div>
+      <div class="small">التحديث التلقائي كل 60 ثانية. يستخدم هذا الإصدار طلبًا جديدًا لتجاوز التخزين المؤقت ويعرض سبب الخطأ عند توفره. قد تتأخر البيانات عن سعر وسيطك.</div>
+    </section>
+    <section class="card wide">
+      <div class="top"><div><div class="label">مسار السعر المسجّل</div><div class="sub">بيانات مرجعية من المصدر، وليست شموع وسيط MetaQuotes-Demo</div></div><span class="tag" id="barsTag">بانتظار البيانات</span></div>
+      <div class="chartwrap"><canvas id="chart"></canvas></div>
+      <div class="small" id="chartNote">لن يتم رسم بيانات تخمينية. إذا لم يتوفر سجل حقيقي فسيظهر ذلك هنا.</div>
+    </section>
+    <section class="card">
+      <div class="label">قراءة الاتجاه المرجعي</div>
+      <div id="trend" class="signal">غير متاح بعد</div>
+      <div class="metrics">
+        <div class="metric"><span>آخر سعر</span><strong id="lastMetric">—</strong></div>
+        <div class="metric"><span>عدد القراءات</span><strong id="countMetric">0</strong></div>
+        <div class="metric"><span>العمر</span><strong id="ageMetric">—</strong></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="label">مؤشرات أولية</div>
+      <div class="status" id="indicators">نحتاج سجل أسعار كافيًا لحساب المؤشرات.</div>
+      <ul class="list">
+        <li>المصدر خارجي، وليس حساب MT5.</li>
+        <li>لا توجد أوامر تداول أو اتصال لتنفيذ الصفقات.</li>
+        <li>إشارات السيولة والاختراقات تحتاج شموع OHLC مناسبة.</li>
+      </ul>
+    </section>
+    <section class="card wide">
+      <div class="label">تنبيه مهم</div>
+      <div class="small">هذه نسخة أولية تعمل من المتصفح عند توفر الإنترنت. سعر الذهب المعروض سعر فوري مرجعي وقد يختلف عن Bid/Ask لدى وسيط MT5. السجل المتاح من المصدر يُسحب كما هو ولا يُستبدل بأسعار مصطنعة. لا تستخدم هذه النسخة وحدها لاتخاذ قرار مالي.</div>
+    </section>
+  </div>
+  <div class="footer">مصدر البيانات: <a href="https://xaus.com/api/" target="_blank" rel="noopener">XAUS Gold Data API</a>. تحديث الأسعار حسب المصدر، وقد تكون الخدمة غير متاحة أحيانًا. هذه الصفحة لا تطلب بيانات دخول MT5 ولا ترسل أوامر تداول.</div>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const state = {timer:null, paused:false, points:[], last:null};
+  const fmt = n => Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  function setConnection(text, cls){ $('connection').textContent=text; $('connection').style.color=cls==='ok'?'var(--green)':cls==='bad'?'var(--red)':'var(--gold)'; }
+  async function jsonFetch(url){
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(),12000);
+    try { const r=await fetch(url,{cache:'no-store',mode:'cors',signal:controller.signal}); const body=await r.text(); let d; try { d=JSON.parse(body); } catch (_) { throw new Error('الاستجابة ليست JSON صالحًا (HTTP '+r.status+')'); } if(!r.ok) throw new Error((d.error||'HTTP '+r.status)+' [HTTP '+r.status+']'); return d; }
+    catch(e) { if(e.name==='AbortError') throw new Error('انتهت مهلة الاتصال بعد 12 ثانية'); if(e instanceof TypeError) throw new Error('فشل fetch؛ قد يكون Safari أو طريقة فتح الملف منع الطلب. افتح الملف في Safari الكامل وتحقق من الإنترنت.'); throw e; }
+    finally { clearTimeout(timeout); }
+  }
+  async function refresh(){
+    $('sourceStatus').innerHTML='<span class="dot warn"></span> جارٍ تحديث السعر…';
+    try{
+      const d=await jsonFetch('https://xaus.com/api/v1/spot?fresh='+Date.now());
+      const p=Number(d.spot_usd_oz ?? d.xau?.price);
+      if(!Number.isFinite(p)||p<=0) throw new Error('استجابة السعر غير صالحة');
+      state.last=p;
+      $('price').textContent=fmt(p);
+      $('lastMetric').textContent=fmt(p);
+      const st=d.data_state?.status || (d.stale?'stale':'fresh');
+      const asof=d.price_as_of || d.data_state?.as_of || d.updated_at;
+      const age=Number(d.data_state?.age_seconds);
+      if(st==='fresh' && (!Number.isFinite(age)||age<180)){
+        $('sourceStatus').innerHTML='<span class="dot ok"></span> متصل · سعر مرجعي حديث';
+        setConnection('متصل','ok');
+      } else {
+        $('sourceStatus').innerHTML='<span class="dot warn"></span> السعر قديم أو مخزّن';
+        setConnection('بيانات قديمة','warn');
+      }
+      $('updated').textContent='وقت المصدر: '+(asof?new Date(asof).toLocaleString():'غير محدد')+' · الحالة: '+st;
+      $('ageMetric').textContent=Number.isFinite(age)?Math.round(age)+'ث':'—';
+    }catch(e){
+      $('sourceStatus').innerHTML='<span class="dot bad"></span> تعذّر جلب السعر';
+      $('updated').textContent='السبب: '+(e.message||'فشل الاتصال')+'. اضغط «تحديث الآن» للمحاولة مجددًا.';
+      setConnection('غير متصل','bad');
+    }
+    try{
+      const d=await jsonFetch('https://xaus.com/api/v1/intraday?symbol=xau&hours=24&fresh='+Date.now());
+      const arr=Array.isArray(d.points)?d.points:[];
+      state.points=arr.map(x=>({t:Number(x.t),p:Number(x.p)})).filter(x=>Number.isFinite(x.t)&&Number.isFinite(x.p)&&x.p>0).sort((a,b)=>a.t-b.t);
+      $('countMetric').textContent=String(state.points.length);
+      $('barsTag').textContent=state.points.length+' قراءة حقيقية';
+      drawChart();
+      if(state.points.length>=3){
+        const first=state.points[0].p, last=state.points[state.points.length-1].p;
+        const change=last-first;
+        $('trend').textContent=change>0?'ميل صاعد مرجعي':change<0?'ميل هابط مرجعي':'حركة شبه مستقرة';
+        $('trend').style.color=change>0?'var(--green)':change<0?'var(--red)':'var(--gold)';
+        $('indicators').textContent='التغير ضمن السجل المتاح: '+(change>0?'+':'')+fmt(change)+' دولار. هذه ليست إشارة تداول ولا تحل محل تحليل شموع M15.';
+      } else {
+        $('trend').textContent='سجل غير كافٍ';
+        $('indicators').textContent='لم تصل قراءات كافية لحساب اتجاه موثوق.';
+      }
+      const coverage=d.coverage_seconds;
+      $('chartNote').textContent='القراءات: كل عدة دقائق حسب المصدر. '+(Number.isFinite(Number(coverage))?'نطاق التغطية التقريبي: '+Math.round(Number(coverage)/60)+' دقيقة. ':'')+'هذا ليس سجل MT5 ولا شموع وسيط قابلة للتنفيذ.';
+    }catch(e){
+      state.points=[]; $('barsTag').textContent='السجل غير متاح'; $('chartNote').textContent='تعذّر تحميل سجل الأسعار الحقيقي؛ لم نعرض بيانات بديلة أو مصطنعة.'; $('countMetric').textContent='0'; drawChart();
+    }
+  }
+  function drawChart(){
+    const c=$('chart'), rect=c.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    c.width=Math.max(1,Math.floor(rect.width*dpr)); c.height=Math.max(1,Math.floor(rect.height*dpr));
+    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr); const w=rect.width,h=rect.height;
+    ctx.clearRect(0,0,w,h); ctx.strokeStyle='#253650'; ctx.lineWidth=1;
+    for(let i=1;i<=4;i++){const y=h*i/5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    if(state.points.length<2){ctx.fillStyle='#9aabc4';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('لا يوجد سجل كافٍ للرسم',w/2,h/2);return;}
+    const pts=state.points.slice(-180), vals=pts.map(x=>x.p), min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
+    const pad=12; ctx.beginPath();
+    pts.forEach((p,i)=>{const x=pad+i*(w-2*pad)/(pts.length-1),y=h-pad-(p.p-min)*(h-2*pad)/range;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.strokeStyle='#f3c969';ctx.lineWidth=2;ctx.stroke();
+    const last=pts[pts.length-1], ly=h-pad-(last.p-min)*(h-2*pad)/range;
+    ctx.fillStyle='#43d6a0';ctx.beginPath();ctx.arc(w-pad,ly,3.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#9aabc4';ctx.font='11px sans-serif';ctx.textAlign='left';ctx.fillText(fmt(max),4,12);ctx.fillText(fmt(min),4,h-3);
+  }
+  $('refresh').addEventListener('click',refresh);
+  $('pause').addEventListener('click',()=>{
+    if(state.timer){clearInterval(state.timer);state.timer=null;state.paused=true;$('pause').textContent='استئناف التحديث';setConnection('التحديث متوقف','warn');}
+    else{state.timer=setInterval(refresh,60000);state.paused=false;$('pause').textContent='إيقاف التحديث';refresh();}
+  });
+  window.addEventListener('resize',drawChart);
+  refresh(); state.timer=setInterval(refresh,60000);
+})();
+</script>
+</body>
+</html>
